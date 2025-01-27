@@ -1,103 +1,43 @@
 import streamlit as st
 
 
-# ====== FUNÇÕES AUXILIARES ======
 def mostrar_pergunta(pergunta, resposta_correta, justificativa):
-    with st.container(border=True):
-        st.markdown(f"**Pergunta:** {pergunta}")
-        resposta_usuario = st.radio(
-            "Resposta:",
-            options=["V", "F"],
-            key=pergunta,
-            index=None,
-        )
-        if resposta_usuario is not None:
-            # Atualizar contagem de respostas
-            if resposta_usuario == resposta_correta:
-                st.session_state.acertos += 1
-                st.success("Correto! ✅")
-            else:
-                st.session_state.erros += 1
-                st.error(f"Incorreto! ❌ Resposta correta: **{resposta_correta}**")
-            st.markdown(f"*Justificativa:* {justificativa}")
-        st.write("---")
-
-
-def calcular_progresso():
-    total_perguntas = sum(len(topico) for topico in st.session_state.perguntas.values())
-    return st.session_state.acertos + st.session_state.erros, total_perguntas
-
-
-# ====== CONFIGURAÇÃO INICIAL ======
-def main():
-    # Inicializar estados da sessão
-    if "acertos" not in st.session_state:
-        st.session_state.acertos = 0
-    if "erros" not in st.session_state:
-        st.session_state.erros = 0
-    if "modo_escuro" not in st.session_state:
-        st.session_state.modo_escuro = False
-
-    # ====== CONFIGURAÇÃO DA PÁGINA ======
-    st.set_page_config(
-        page_title="Quiz de Macro III - por Bernardo Louzada",
-        page_icon="📚",
-        layout="centered"
+    st.markdown(f"**Pergunta:** {pergunta}")
+    resposta_usuario = st.radio(
+        "Resposta:",
+        options=["V", "F"],
+        key=pergunta,
+        index=None,  # Nenhuma opção selecionada por padrão
     )
+    if resposta_usuario is not None:
+        if resposta_usuario == resposta_correta:
+            st.success("Correto! ✅")
+        else:
+            st.error(f"Incorreto! ❌ A resposta correta é: {resposta_correta}")
+        st.write(f"**Justificativa:** {justificativa}")
+    st.write("---")  # Linha divisória entre as perguntas
 
-    # CSS para modo escuro/claro
-    st.markdown(f"""
-        <style>
-            .main {{
-                background-color: {'#1E1E1E' if st.session_state.modo_escuro else 'white'};
-                color: {'white' if st.session_state.modo_escuro else 'black'};
-            }}
-        </style>
-    """, unsafe_allow_html=True)
 
-    # ====== BARRA LATERAL ======
+def main():
+    # Configuração da página
+    st.set_page_config(page_title="Quiz de Macro III - por Bernardo Louzada", page_icon="📚", layout="centered")
+
+    # Barra lateral para instruções
     with st.sidebar:
-        st.title("⚙️ Configurações")
+        st.title("Instruções")
+        st.write("""
+        Bem-vindo ao Quiz de revisão pra P1 de Macro III!
 
-        # Tema
-        st.session_state.modo_escuro = st.toggle("Modo Escuro 🌙")
+        - Responda às perguntas marcando **Verdadeiro (V)** ou **Falso (F)**.
+        - Após responder, você verá se acertou e a justificativa da resposta.
+        - As perguntas estão organizadas por tópicos.
+        - Boa sorte! 🤓
+        """)
 
-        # Seletor de Tópicos
-        st.subheader("📚 Tópicos")
-        tópicos = {
-            "Demanda Efetiva": "1",
-            "Taxa de Juros": "2",
-            "Investimento I": "3",
-            "Investimento II": "4",
-            "Multiplicador": "5",
-            "Neoclássicos": "6",
-            "Keynesiana": "7",
-            "Equilíbrio": "8",
-            "Keynes vs Neo": "9",
-            "Demanda TG": "10",
-            "Investimento TG": "11",
-            "Multiplicador Keynes": "12"
-        }
-        tópicos_selecionados = [k for k, v in tópicos.items() if st.checkbox(k, key=v, value=True)]
+    # Título principal
+    st.title("Quiz de revisão pra P1 de Macro III")
+    st.write("Programei isso pra brincar e ajudar geral a revisar. Tmj galera. 🤍📖 - @Bernardo Louzada")
 
-        # Botão de Reinício
-        if st.button("🔄 Reiniciar Quiz"):
-            st.session_state.acertos = 0
-            st.session_state.erros = 0
-            st.rerun()
-
-    # ====== CONTEÚDO PRINCIPAL ======
-    st.title("Quiz de revisão pra P1 de Macro III 📖")
-    st.caption("Programei isso pra brincar e ajudar geral a revisar. Tmj galera. 🤍 - @Bernardo Louzada")
-
-    # Barra de Progresso
-    respondidas, total = calcular_progresso()
-    st.progress(respondidas / total if total > 0 else 0)
-    st.subheader(f"🎯 Acertos: {st.session_state.acertos} | ❌ Erros: {st.session_state.erros}")
-
-    # ====== PERGUNTAS (ESTRUTURA SIMPLIFICADA) ======
-    # [As listas de perguntas originais devem ser mantidas aqui...]
-    # Adicione todas as perguntas conforme o código anterior, organizando em dicionários por tópico.
     # Perguntas organizadas por tópicos
     st.header("1. Princípio da Demanda Efetiva")
     perguntas_demanda_efetiva = [
@@ -352,19 +292,9 @@ def main():
     for q in perguntas_multiplicador_keynes:
         mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
 
-        # Filtrar perguntas pelos tópicos selecionados
-        for tópico in tópicos_selecionados:
-            st.header(f"{list(tópicos.keys()).index(tópico) + 1}. {tópico}")
-            for q in st.session_state.perguntas.get(tópico, []):
-                mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
+    # Mensagem final (já existente)
+    st.success("🎉 Fim do quiz! Boa sorte na prova!")
 
-        # ====== SEÇÃO FINAL ======
-        st.markdown("---")
-        if respondidas == total and total > 0:
-            st.balloons()
-            acuracia = (st.session_state.acertos / total) * 100
-            st.success(f"🏆 **Quiz Concluído!** Acurácia: **{acuracia:.1f}%**")
-            st.metric("Resumo", f"{st.session_state.acertos}/{total} corretas")
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()

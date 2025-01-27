@@ -1,43 +1,103 @@
 import streamlit as st
 
 
+# ====== FUNÇÕES AUXILIARES ======
 def mostrar_pergunta(pergunta, resposta_correta, justificativa):
-    st.markdown(f"**Pergunta:** {pergunta}")
-    resposta_usuario = st.radio(
-        "Resposta:",
-        options=["V", "F"],
-        key=pergunta,
-        index=None,  # Nenhuma opção selecionada por padrão
-    )
-    if resposta_usuario is not None:
-        if resposta_usuario == resposta_correta:
-            st.success("Correto! ✅")
-        else:
-            st.error(f"Incorreto! ❌ A resposta correta é: {resposta_correta}")
-        st.write(f"**Justificativa:** {justificativa}")
-    st.write("---")  # Linha divisória entre as perguntas
+    with st.container(border=True):
+        st.markdown(f"**Pergunta:** {pergunta}")
+        resposta_usuario = st.radio(
+            "Resposta:",
+            options=["V", "F"],
+            key=pergunta,
+            index=None,
+        )
+        if resposta_usuario is not None:
+            # Atualizar contagem de respostas
+            if resposta_usuario == resposta_correta:
+                st.session_state.acertos += 1
+                st.success("Correto! ✅")
+            else:
+                st.session_state.erros += 1
+                st.error(f"Incorreto! ❌ Resposta correta: **{resposta_correta}**")
+            st.markdown(f"*Justificativa:* {justificativa}")
+        st.write("---")
 
 
+def calcular_progresso():
+    total_perguntas = sum(len(topico) for topico in st.session_state.perguntas.values())
+    return st.session_state.acertos + st.session_state.erros, total_perguntas
+
+
+# ====== CONFIGURAÇÃO INICIAL ======
 def main():
-    # Configuração da página
-    st.set_page_config(page_title="Quiz de Macro III - por Bernardo Louzada", page_icon="📚", layout="centered")
+    # Inicializar estados da sessão
+    if "acertos" not in st.session_state:
+        st.session_state.acertos = 0
+    if "erros" not in st.session_state:
+        st.session_state.erros = 0
+    if "modo_escuro" not in st.session_state:
+        st.session_state.modo_escuro = False
 
-    # Barra lateral para instruções
+    # ====== CONFIGURAÇÃO DA PÁGINA ======
+    st.set_page_config(
+        page_title="Quiz de Macro III - por Bernardo Louzada",
+        page_icon="📚",
+        layout="centered"
+    )
+
+    # CSS para modo escuro/claro
+    st.markdown(f"""
+        <style>
+            .main {{
+                background-color: {'#1E1E1E' if st.session_state.modo_escuro else 'white'};
+                color: {'white' if st.session_state.modo_escuro else 'black'};
+            }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    # ====== BARRA LATERAL ======
     with st.sidebar:
-        st.title("Instruções")
-        st.write("""
-        Bem-vindo ao Quiz de revisão pra P1 de Macro III!
+        st.title("⚙️ Configurações")
 
-        - Responda às perguntas marcando **Verdadeiro (V)** ou **Falso (F)**.
-        - Após responder, você verá se acertou e a justificativa da resposta.
-        - As perguntas estão organizadas por tópicos.
-        - Boa sorte! 🤓
-        """)
+        # Tema
+        st.session_state.modo_escuro = st.toggle("Modo Escuro 🌙")
 
-    # Título principal
-    st.title("Quiz de revisão pra P1 de Macro III")
-    st.write("Programei isso pra brincar e ajudar geral a revisar. Tmj galera. 🤍📖 - @Bernardo Louzada")
+        # Seletor de Tópicos
+        st.subheader("📚 Tópicos")
+        tópicos = {
+            "Demanda Efetiva": "1",
+            "Taxa de Juros": "2",
+            "Investimento I": "3",
+            "Investimento II": "4",
+            "Multiplicador": "5",
+            "Neoclássicos": "6",
+            "Keynesiana": "7",
+            "Equilíbrio": "8",
+            "Keynes vs Neo": "9",
+            "Demanda TG": "10",
+            "Investimento TG": "11",
+            "Multiplicador Keynes": "12"
+        }
+        tópicos_selecionados = [k for k, v in tópicos.items() if st.checkbox(k, key=v, value=True)]
 
+        # Botão de Reinício
+        if st.button("🔄 Reiniciar Quiz"):
+            st.session_state.acertos = 0
+            st.session_state.erros = 0
+            st.rerun()
+
+    # ====== CONTEÚDO PRINCIPAL ======
+    st.title("Quiz de revisão pra P1 de Macro III 📖")
+    st.caption("Programei isso pra brincar e ajudar geral a revisar. Tmj galera. 🤍 - @Bernardo Louzada")
+
+    # Barra de Progresso
+    respondidas, total = calcular_progresso()
+    st.progress(respondidas / total if total > 0 else 0)
+    st.subheader(f"🎯 Acertos: {st.session_state.acertos} | ❌ Erros: {st.session_state.erros}")
+
+    # ====== PERGUNTAS (ESTRUTURA SIMPLIFICADA) ======
+    # [As listas de perguntas originais devem ser mantidas aqui...]
+    # Adicione todas as perguntas conforme o código anterior, organizando em dicionários por tópico.
     # Perguntas organizadas por tópicos
     st.header("1. Princípio da Demanda Efetiva")
     perguntas_demanda_efetiva = [
@@ -186,10 +246,125 @@ def main():
     for q in perguntas_keynesiana:
         mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
 
-    # Mensagem final
-    st.markdown("---")
-    st.success("🎉 Fim do jogo! Obrigado por participar!")
 
+    st.header("8. Equilíbrio Macroeconômico")
+    perguntas_equilibrio = [
+        {
+            "pergunta": "A resolução proposta por Keynes, no que diz respeito ao sistema de equações simultâneas que representa as condições do equilíbrio macroeconômico, consiste em tornar exógena a renda.",
+            "resposta_correta": "F",
+            "justificativa": "Keynes torna exógenas as expectativas de longo prazo e a demanda efetiva, não a renda. A renda é determinada endogenamente pelo modelo."
+        },
+        {
+            "pergunta": "A partir da resolução proposta por Keynes, a determinação do produto de equilíbrio depende, em parte, da moeda.",
+            "resposta_correta": "V",
+            "justificativa": "A taxa de juros (influenciada pela oferta monetária) afeta o investimento, que é componente da demanda efetiva."
+        },
+        {
+            "pergunta": "Para a economia neoclássica, o equilíbrio macroeconômico (demanda agregada igual à oferta agregada) é realizado para qualquer nível do produto.",
+            "resposta_correta": "V",
+            "justificativa": "Neoclássicos seguem a Lei de Say: a oferta cria sua própria demanda, válida para qualquer nível de produção."
+        }
+    ]
+    for q in perguntas_equilibrio:
+        mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
 
-if __name__ == "__main__":
-    main()
+    st.header("9. Keynes vs Neoclássicos")
+    perguntas_keynes_neoclassicos = [
+        {
+            "pergunta": "A análise de Keynes, na Teoria Geral, é totalmente compatível com a verificação da teoria dos fundos de empréstimos (TFE).",
+            "resposta_correta": "F",
+            "justificativa": "Keynes rejeita a TFE, pois sua teoria da taxa de juros baseia-se na preferência pela liquidez, não na poupança prévia."
+        },
+        {
+            "pergunta": "Segundo Keynes, a TFE é compatível com a existência do multiplicador de investimento.",
+            "resposta_correta": "F",
+            "justificativa": "A TFE supõe poupança como pré-condição do investimento, enquanto o multiplicador keynesiano mostra que o investimento gera poupança."
+        },
+        {
+            "pergunta": "Keynes adota o segundo postulado da economia (neo)clássica, postulado segundo o qual 'A utilidade do salário, quando se emprega determinado volume de trabalho, é igual à desutilidade marginal desse mesmo volume de emprego'.",
+            "resposta_correta": "F",
+            "justificativa": "Keynes rejeita esse postulado, argumentando que salários são rígidos em termos nominais e não se ajustam automaticamente."
+        }
+    ]
+    for q in perguntas_keynes_neoclassicos:
+        mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
+
+    st.header("10. Demanda Efetiva na Teoria Geral")
+    perguntas_demanda_teoria_geral = [
+        {
+            "pergunta": "O ponto de demanda efetiva corresponde à maximização dos lucros efetivamente auferidos pelos capitalistas.",
+            "resposta_correta": "F",
+            "justificativa": "Corresponde à maximização das expectativas de lucro, não necessariamente dos lucros realizados (há incerteza)."
+        },
+        {
+            "pergunta": "As expectativas de longo prazo estão embutidas na função de oferta agregada, o que explica sua inclinação.",
+            "resposta_correta": "V",
+            "justificativa": "A oferta agregada reflete custos e expectativas de retorno de longo prazo dos empresários."
+        },
+        {
+            "pergunta": "Uma modificação das expectativas de longo prazo se traduz obrigatoriamente por uma modificação do ponto de demanda efetiva.",
+            "resposta_correta": "V",
+            "justificativa": "Expectativas alteram o investimento e a demanda efetiva, deslocando o equilíbrio."
+        }
+    ]
+    for q in perguntas_demanda_teoria_geral:
+        mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
+
+    st.header("11. Função de Investimento na TG")
+    perguntas_investimento_tg = [
+        {
+            "pergunta": "O preço de oferta de um bem de capital representa o valor pelo qual este bem foi comprado pelo capitalista.",
+            "resposta_correta": "F",
+            "justificativa": "Preço de oferta é o custo de reposição atual, não o preço histórico."
+        },
+        {
+            "pergunta": "O investimento será efetivamente realizado quando o preço de oferta for superior ao preço de demanda.",
+            "resposta_correta": "F",
+            "justificativa": "O investimento ocorre quando o preço de demanda (retorno esperado) supera o preço de oferta (custo)."
+        },
+        {
+            "pergunta": "No curto prazo, quando o investimento aumenta, a eficiência marginal do capital diminui pelo fato do preço de oferta aumentar.",
+            "resposta_correta": "V",
+            "justificativa": "Maior demanda por bens de capital eleva seus custos (preço de oferta), reduzindo a EMC."
+        }
+    ]
+    for q in perguntas_investimento_tg:
+        mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
+
+    st.header("12. Multiplicador Keynesiano")
+    perguntas_multiplicador_keynes = [
+        {
+            "pergunta": "O paradoxo da abundância ressalta o fato que quanto mais rica uma sociedade, menor tem que ser o aumento do investimento produtivo para alcançar uma situação de pleno emprego.",
+            "resposta_correta": "F",
+            "justificativa": "O paradoxo afirma que sociedades ricas têm menor multiplicador, exigindo aumentos maiores no investimento para gerar emprego."
+        },
+        {
+            "pergunta": "O multiplicador keynesiano implica que uma política de redistribuição da renda para camadas mais pobres aumenta o valor deste multiplicador.",
+            "resposta_correta": "V",
+            "justificativa": "Populações mais pobres têm maior propensão a consumir, elevando o multiplicador (k = 1/s)."
+        },
+        {
+            "pergunta": "Um aumento da propensão marginal e média a poupar vem diminuir o valor do multiplicador.",
+            "resposta_correta": "V",
+            "justificativa": "Multiplicador é inversamente proporcional à propensão a poupar (k = 1/s). Quanto maior 's', menor 'k'."
+        }
+    ]
+    for q in perguntas_multiplicador_keynes:
+        mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
+
+        # Filtrar perguntas pelos tópicos selecionados
+        for tópico in tópicos_selecionados:
+            st.header(f"{list(tópicos.keys()).index(tópico) + 1}. {tópico}")
+            for q in st.session_state.perguntas.get(tópico, []):
+                mostrar_pergunta(q["pergunta"], q["resposta_correta"], q["justificativa"])
+
+        # ====== SEÇÃO FINAL ======
+        st.markdown("---")
+        if respondidas == total and total > 0:
+            st.balloons()
+            acuracia = (st.session_state.acertos / total) * 100
+            st.success(f"🏆 **Quiz Concluído!** Acurácia: **{acuracia:.1f}%**")
+            st.metric("Resumo", f"{st.session_state.acertos}/{total} corretas")
+
+    if __name__ == "__main__":
+        main()
